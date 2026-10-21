@@ -32,7 +32,7 @@ with Home Assistant's REST/Scrape integrations — hence this add-on.
 ## Configuration
 
 ```yaml
-ups_host: 192.168.1.19
+ups_host: 192.168.1.100  # required — your card's IP or hostname
 ups_username: apc
 ups_password: apc
 poll_interval: 60
@@ -40,10 +40,16 @@ poll_interval: 60
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `ups_host` | `192.168.1.19` | IP address or hostname of the UPS management card **(set this to your UPS)** |
+| `ups_host` | — (**required**, no default) | IP address or hostname of the UPS management card |
 | `ups_username` | `apc` | Management card user name |
 | `ups_password` | `apc` | Management card password |
 | `poll_interval` | `60` | Seconds between polls, 15–600 |
+
+The add-on only ever *reads* the card's status page — it never changes
+settings or controls outlets — so any account that can log in and view
+the status pages is sufficient, including a read-only account if you
+enable one on the card (Configuration → Security → Local Users in the
+card's web UI).
 
 ## Entities
 

@@ -1,5 +1,5 @@
 name: BG500 UPS Poller
-version: 1.0.0
+version: 1.0.1
 slug: bg500_poller
 description: >-
   Polls the APC Back-UPS Pro 500 (BG500) network management card web UI
@@ -14,7 +14,6 @@ startup: application
 boot: auto
 homeassistant_api: true
 options:
-  ups_host: 192.168.1.19
   ups_username: apc
   ups_password: apc
   poll_interval: 60

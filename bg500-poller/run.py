@@ -23,7 +23,7 @@ OPTIONS_PATH = "/data/options.json"
 
 def load_options():
     opts = {
-        "ups_host": "192.168.1.19",
+        "ups_host": "",
         "ups_username": "apc",
         "ups_password": "apc",
         "poll_interval": 60,
@@ -45,6 +45,11 @@ def log(msg):
 
 def fetch_status_page(opts):
     """Log in to the NMC and return the home.htm HTML."""
+    if not opts.get("ups_host"):
+        raise RuntimeError(
+            "ups_host is not configured - set it to your UPS management "
+            "card's IP or hostname in the add-on Configuration tab"
+        )
     base = f"http://{opts['ups_host']}"
     jar = http.cookiejar.CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))

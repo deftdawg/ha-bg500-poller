@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1 — 2026-10-21
+
+- Fix add-on build: the `ghcr.io/home-assistant/*-base-python:3.12`
+  images don't exist; build from the multi-arch `python:3.12-alpine`
+  image instead.
+- `ups_host` no longer has a default value — it must be set in the
+  add-on configuration (the add-on logs a clear error until it is).
+
 ## 1.0.0 — 2026-10-21
 
 - Initial release.

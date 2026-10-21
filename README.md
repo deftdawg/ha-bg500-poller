@@ -64,7 +64,7 @@ hard-coded:
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `ups_host` | `192.168.1.19` | IP or hostname of the UPS management card |
+| `ups_host` | — (**required**) | IP or hostname of the UPS management card |
 | `ups_username` | `apc` | Management card user name |
 | `ups_password` | `apc` | Management card password |
 | `poll_interval` | `60` | Seconds between polls (15–600) |

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.2 — 2026-10-21
+
+- Fix startup failure (`python3: not found` in the s6 init log): the
+  Docker `python` image keeps python3 in `/usr/local/bin`, which the
+  Supervisor's s6 environment doesn't have on PATH. Build from the
+  official Home Assistant base-python image
+  (`ghcr.io/home-assistant/*-base-python:3.13-alpine3.20`) instead —
+  tags verified to exist for aarch64, amd64 and armv7.
+
 ## 1.0.1 — 2026-10-21
 
 - Fix add-on build: the `ghcr.io/home-assistant/*-base-python:3.12`

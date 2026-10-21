@@ -1,5 +1,5 @@
 name: BG500 UPS Poller
-version: 1.0.1
+version: 1.0.2
 slug: bg500_poller
 description: >-
   Polls the APC Back-UPS Pro 500 (BG500) network management card web UI

@@ -1,0 +1,25 @@
+name: BG500 UPS Poller
+version: 1.0.0
+slug: bg500_poller
+description: >-
+  Polls the APC Back-UPS Pro 500 (BG500) network management card web UI
+  and publishes power sensors into Home Assistant. Runs on the HA host
+  itself, so monitoring keeps working during a power outage.
+arch:
+  - aarch64
+  - amd64
+  - armv7
+init: false
+startup: application
+boot: auto
+homeassistant_api: true
+options:
+  ups_host: 192.168.1.19
+  ups_username: apc
+  ups_password: apc
+  poll_interval: 60
+schema:
+  ups_host: str
+  ups_username: str
+  ups_password: password
+  poll_interval: int(15,600)

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3 — 2026-10-21
+
+- Diagnostics: fetch and push are now logged as separate stages (with
+  the failing URL/entity and response body), and startup logs whether
+  SUPERVISOR_TOKEN is present — to pin down a 401 seen in the field.
+
 ## 1.0.2 — 2026-10-21
 
 - Fix startup failure (`python3: not found` in the s6 init log): the

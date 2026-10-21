@@ -17,6 +17,7 @@ import sys
 import time
 import urllib.request
 import urllib.parse
+import urllib.error
 
 OPTIONS_PATH = "/data/options.json"
 
@@ -55,8 +56,14 @@ def fetch_status_page(opts):
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
     opener.addheaders = [("User-Agent", "bg500-poller")]
 
-    with opener.open(base + "/", timeout=25) as resp:
-        login_page = resp.read().decode("utf-8", "replace")
+    try:
+        with opener.open(base + "/", timeout=25) as resp:
+            login_page = resp.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace")[:200]
+        raise RuntimeError(
+            f"GET {base}/ -> HTTP {exc.code}: {detail}"
+        ) from exc
     m = re.search(r'action="(/NMC/[^"]+/Forms/login1)"', login_page.replace("\r", "").replace("\n", ""))
     if not m:
         raise RuntimeError("login form action not found")
@@ -70,9 +77,15 @@ def fetch_status_page(opts):
         }
     ).encode()
     req = urllib.request.Request(base + form, data=data)
-    with opener.open(req, timeout=25) as resp:
-        final_url = resp.geturl()
-        html = resp.read().decode("utf-8", "replace")
+    try:
+        with opener.open(req, timeout=25) as resp:
+            final_url = resp.geturl()
+            html = resp.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace")[:200]
+        raise RuntimeError(
+            f"POST login -> HTTP {exc.code}: {detail}"
+        ) from exc
     m = re.match(r".*/NMC/([^/]+)/home\.htm$", final_url)
     if not m:
         raise RuntimeError(f"login failed, landed on {final_url}")
@@ -182,6 +195,11 @@ def parse(html):
 
 def push(entities):
     token = os.environ.get("SUPERVISOR_TOKEN", "")
+    if not token:
+        raise RuntimeError(
+            "SUPERVISOR_TOKEN is not set in the add-on environment "
+            "(the add-on needs homeassistant_api: true)"
+        )
     api = os.environ.get("HASS_API_BASE", "http://supervisor/core/api")
     for eid, state, attrs in entities:
         body = json.dumps({"state": str(state), "attributes": attrs}).encode()
@@ -190,26 +208,39 @@ def push(entities):
             headers={"Authorization": f"Bearer {token}",
                      "Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            if resp.status not in (200, 201):
-                raise RuntimeError(f"POST {eid} -> HTTP {resp.status}")
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                if resp.status not in (200, 201):
+                    raise RuntimeError(f"POST {eid} -> HTTP {resp.status}")
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")[:200]
+            raise RuntimeError(
+                f"push {eid} -> HTTP {exc.code}: {detail}"
+            ) from exc
 
 
 def main():
     opts = load_options()
     interval = int(opts["poll_interval"])
     log(f"polling {opts['ups_host']} every {interval}s")
+    log(f"card account: {opts['ups_username']}")
+    log(f"SUPERVISOR_TOKEN present: {bool(os.environ.get('SUPERVISOR_TOKEN'))}")
     while True:
         try:
             entities = parse(fetch_status_page(opts))
+        except Exception as exc:  # card fetch/parse problem
+            log(f"fetch failed: {exc}")
+            time.sleep(interval)
+            continue
+        by_id = {e[0]: e[1] for e in entities}
+        log(f"fetch ok: load={by_id['sensor.bg500_load']}W "
+            f"batt={by_id['sensor.bg500_battery_capacity']}% "
+            f"in={by_id['sensor.bg500_input_voltage']}V")
+        try:
             push(entities)
-            by_id = {e[0]: e[1] for e in entities}
-            log(f"ok: load={by_id['sensor.bg500_load']}W "
-                f"batt={by_id['sensor.bg500_battery_capacity']}% "
-                f"in={by_id['sensor.bg500_input_voltage']}V "
-                f"on_battery={by_id['binary_sensor.bg500_on_battery']}")
+            log(f"push ok: on_battery={by_id['binary_sensor.bg500_on_battery']}")
         except Exception as exc:  # keep the loop alive; next cycle retries
-            log(f"poll failed: {exc}")
+            log(f"push failed: {exc}")
         time.sleep(interval)
 
 

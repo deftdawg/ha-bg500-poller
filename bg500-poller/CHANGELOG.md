@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.4 — 2026-10-21
+
+- Fix "SUPERVISOR_TOKEN present: False": s6-overlay doesn't propagate
+  the container environment to the services it starts (only processes
+  launched via `with-contenv` see it). The token is now also read from
+  `/run/s6/container_environment/SUPERVISOR_TOKEN`, where s6 keeps the
+  original container env.
+
 ## 1.0.3 — 2026-10-21
 
 - Diagnostics: fetch and push are now logged as separate stages (with

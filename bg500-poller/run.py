@@ -193,12 +193,32 @@ def parse(html):
     return entities
 
 
-def push(entities):
+def supervisor_token():
+    """Return the SUPERVISOR_TOKEN.
+
+    The Supervisor puts the token in the container environment, but
+    s6-overlay does not propagate the container env to the services it
+    starts — it keeps the original env in /run/s6/container_environment/
+    and only processes launched via with-contenv see it. This process is
+    started directly, so fall back to reading that file.
+    """
     token = os.environ.get("SUPERVISOR_TOKEN", "")
+    if token:
+        return token
+    try:
+        with open("/run/s6/container_environment/SUPERVISOR_TOKEN") as fh:
+            return fh.read().strip()
+    except OSError:
+        return ""
+
+
+def push(entities):
+    token = supervisor_token()
     if not token:
         raise RuntimeError(
-            "SUPERVISOR_TOKEN is not set in the add-on environment "
-            "(the add-on needs homeassistant_api: true)"
+            "SUPERVISOR_TOKEN not found (checked env and "
+            "/run/s6/container_environment) — the add-on needs "
+            "homeassistant_api: true"
         )
     api = os.environ.get("HASS_API_BASE", "http://supervisor/core/api")
     for eid, state, attrs in entities:
@@ -224,7 +244,7 @@ def main():
     interval = int(opts["poll_interval"])
     log(f"polling {opts['ups_host']} every {interval}s")
     log(f"card account: {opts['ups_username']}")
-    log(f"SUPERVISOR_TOKEN present: {bool(os.environ.get('SUPERVISOR_TOKEN'))}")
+    log(f"SUPERVISOR_TOKEN present: {bool(supervisor_token())}")
     while True:
         try:
             entities = parse(fetch_status_page(opts))
